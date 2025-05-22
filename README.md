@@ -24,7 +24,7 @@ Essa tool serve para renomear e mudar os IDs dos bones.
 <br> A utilidade dessa tool é converter os SMDs do RE4 2007 para o RE4 UHD e vice-versa.
 <br> Mas para isso você vai precisar de um arquivo "replacebone", esse arquivo informa qual bone vira, qual bone. Deixei dois exemplos junto com o programa.
 <br>Uso:
-<br>**SMD_FIX_BONE_ID.exe "edited.smd" "your.replacebone"**
+<br>**SMD_REPLACE_BONE.exe "edited.smd" "your.replacebone"**
 
 ### your.replacebone
 
