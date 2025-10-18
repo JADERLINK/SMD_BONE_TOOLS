@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 
 namespace SMD_REPLACE_BONE
@@ -17,7 +16,7 @@ namespace SMD_REPLACE_BONE
             Console.WriteLine("# by: JADERLINK");
             Console.WriteLine("# youtube.com/@JADERLINK");
             Console.WriteLine("# github.com/JADERLINK");
-            Console.WriteLine("# Version 1.0 (2025-02-05)");
+            Console.WriteLine("# Version 1.1 (2025-10-18)");
             Console.WriteLine("");
 
             try
@@ -34,7 +33,7 @@ namespace SMD_REPLACE_BONE
             Console.ReadKey();
         }
 
-        public static void Continue(string[] args)
+        static void Continue(string[] args)
         {
             if (args.Length < 2)
             {
@@ -103,10 +102,7 @@ namespace SMD_REPLACE_BONE
             }
             finally 
             {
-                if (streamSmd != null)
-                {
-                    streamSmd.Close();
-                }
+                streamSmd?.Close();
             }
 
             try
@@ -122,7 +118,7 @@ namespace SMD_REPLACE_BONE
             SMD_READER_LIB.SMD newSMD = SmdReplaceBone.Action(smd, replace);
 
             var stream = new FileInfo(Path.ChangeExtension(SmdFileInfo.FullName, ".replaced.smd")).CreateText();
-            SMD_WRITER.SmdWriter.WriteSMD(newSMD, stream);
+            SMD_WRITER_LIB.SmdWriter.WriteSMD(newSMD, stream);
             stream.WriteLine("// SMD_REPLACE_BONE");
             stream.WriteLine("// By: JADERLINK");
             stream.WriteLine("// youtube.com/@JADERLINK");

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 
 namespace SMD_FIX_BONE_ID
@@ -18,7 +17,7 @@ namespace SMD_FIX_BONE_ID
             Console.WriteLine("# By JADERLINK");
             Console.WriteLine("# youtube.com/@JADERLINK");
             Console.WriteLine("# github.com/JADERLINK");
-            Console.WriteLine("# VERSION 1.0 (2025-02-05)");
+            Console.WriteLine("# VERSION 1.1 (2025-10-18)");
             Console.WriteLine("");
 
             for (int i = 0; i < args.Length; i++)
@@ -26,7 +25,7 @@ namespace SMD_FIX_BONE_ID
                 if (File.Exists(args[i]))
                 {
                     string ext = Path.GetExtension(args[i].ToUpperInvariant());
-                    if (ext == ".SMD")
+                    if (ext == ".SMD" || ext == ".VTA")
                     {
                         try
                         {

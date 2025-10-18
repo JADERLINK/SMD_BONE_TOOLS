@@ -2,22 +2,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using SMD_READER_LIB;
+using System.Text.RegularExpressions;
 
 namespace SMD_FIX_BONE_ID
 {
     internal static class FixSmdBoneId
     {
-        public static void Action(string editedFilePath) 
+        public static void Action(string smdFilePath) 
         {
             SMD eSMD = null;
             StreamReader eStream = null;
 
             try
             {
-                var eFile = new FileInfo(editedFilePath);
+                var eFile = new FileInfo(smdFilePath);
                 Console.WriteLine("File: " + eFile.Name);
                 eStream = eFile.OpenText();
                 eSMD = SmdReader.Reader(eStream);
@@ -28,16 +28,12 @@ namespace SMD_FIX_BONE_ID
             }
             finally
             {
-                if (eStream != null)
-                {
-                    eStream.Close();
-                }
+                eStream?.Close();
             }
 
             int lastNextOriginalID = 0;
             int NameConsolePad = 0;
 
-            // edit
             Dictionary<string, int> editedOrder = new Dictionary<string, int>();
             Dictionary<string, int> editedParent = new Dictionary<string, int>();
             Dictionary<string, string> editedBoneName = new Dictionary<string, string>();
@@ -62,12 +58,14 @@ namespace SMD_FIX_BONE_ID
             Dictionary<int, int> oldIdNewId = new Dictionary<int, int>();
             oldIdNewId.Add(-1, -1);
 
+            Regex regex = new Regex("^.*b(?:one|0ne)_[0-9]{1,3}$");
+
             foreach (var item in editedOrder)
             {
                 if ( ! oldIdNewId.ContainsKey(item.Value))
                 {
                     var split = item.Key.Split('_');
-                    if (item.Key.StartsWith("bone_") && split.Length == 2 && int.TryParse(split[1], out int newId))
+                    if (regex.IsMatch(item.Key) && split.Length > 1 && int.TryParse(split.LastOrDefault(), out int newId))
                     {
                         oldIdNewId.Add(item.Value, newId);
                     }
@@ -151,66 +149,69 @@ namespace SMD_FIX_BONE_ID
             // vertex fix
             List<Triangle> newTriangles = new List<Triangle>();
 
-            foreach (var tri in eSMD.Triangles)
+            if (eSMD.Triangles != null)
             {
-                List<Vertex> newVertexs = new List<Vertex>();
-                foreach (var vertex in tri.Vertexs)
+                foreach (var tri in eSMD.Triangles)
                 {
-                    Vertex nv = new Vertex();
-                    nv.VertexID = vertex.VertexID;
-                    nv.PosX = vertex.PosX;
-                    nv.PosY = vertex.PosY;
-                    nv.PosZ = vertex.PosZ;
-                    nv.NormX = vertex.NormX;
-                    nv.NormY = vertex.NormY;
-                    nv.NormZ = vertex.NormZ;
-                    nv.U = vertex.U;
-                    nv.V = vertex.V;
-
-                    int newBoneId = 0;
-                    if (oldIdNewId.ContainsKey(vertex.ParentBone))
+                    List<Vertex> newVertexs = new List<Vertex>();
+                    foreach (var vertex in tri.Vertexs)
                     {
-                        newBoneId = oldIdNewId[vertex.ParentBone];
-                    }
-                    else
-                    {
-                        newBoneId = lastNextOriginalID;
-                        oldIdNewId.Add(vertex.ParentBone, lastNextOriginalID);
-                        lastNextOriginalID++;
-                    }
-                    nv.ParentBone = newBoneId;
+                        Vertex nv = new Vertex();
+                        nv.VertexID = vertex.VertexID;
+                        nv.PosX = vertex.PosX;
+                        nv.PosY = vertex.PosY;
+                        nv.PosZ = vertex.PosZ;
+                        nv.NormX = vertex.NormX;
+                        nv.NormY = vertex.NormY;
+                        nv.NormZ = vertex.NormZ;
+                        nv.U = vertex.U;
+                        nv.V = vertex.V;
 
-                    nv.Links = new List<WeightMap>();
-
-                    foreach (var weightMap in vertex.Links)
-                    {
-                        int newWeightBoneId = 0;
-                        if (oldIdNewId.ContainsKey(weightMap.BoneID))
+                        int newBoneId = 0;
+                        if (oldIdNewId.ContainsKey(vertex.ParentBone))
                         {
-                            newWeightBoneId = oldIdNewId[weightMap.BoneID];
+                            newBoneId = oldIdNewId[vertex.ParentBone];
                         }
                         else
                         {
-                            newWeightBoneId = lastNextOriginalID;
-                            oldIdNewId.Add(weightMap.BoneID, lastNextOriginalID);
+                            newBoneId = lastNextOriginalID;
+                            oldIdNewId.Add(vertex.ParentBone, lastNextOriginalID);
                             lastNextOriginalID++;
                         }
+                        nv.ParentBone = newBoneId;
 
-                        WeightMap newWeightMap = new WeightMap();
-                        newWeightMap.BoneID = newWeightBoneId;
-                        newWeightMap.Weight = weightMap.Weight;
-                        nv.Links.Add(newWeightMap);
+                        nv.Links = new List<WeightMap>();
 
+                        foreach (var weightMap in vertex.Links)
+                        {
+                            int newWeightBoneId = 0;
+                            if (oldIdNewId.ContainsKey(weightMap.BoneID))
+                            {
+                                newWeightBoneId = oldIdNewId[weightMap.BoneID];
+                            }
+                            else
+                            {
+                                newWeightBoneId = lastNextOriginalID;
+                                oldIdNewId.Add(weightMap.BoneID, lastNextOriginalID);
+                                lastNextOriginalID++;
+                            }
+
+                            WeightMap newWeightMap = new WeightMap();
+                            newWeightMap.BoneID = newWeightBoneId;
+                            newWeightMap.Weight = weightMap.Weight;
+                            nv.Links.Add(newWeightMap);
+
+                        }
+
+                        newVertexs.Add(nv);
                     }
 
-                    newVertexs.Add(nv);
+                    Triangle newtriangle = new Triangle();
+                    newtriangle.ID = tri.ID;
+                    newtriangle.Material = tri.Material;
+                    newtriangle.Vertexs = newVertexs;
+                    newTriangles.Add(newtriangle);
                 }
-
-                Triangle newtriangle = new Triangle();
-                newtriangle.ID = tri.ID;
-                newtriangle.Material = tri.Material;
-                newtriangle.Vertexs = newVertexs;
-                newTriangles.Add(newtriangle);
             }
 
             SMD newSMD = new SMD();
@@ -219,8 +220,8 @@ namespace SMD_FIX_BONE_ID
             newSMD.Triangles = newTriangles;
             newSMD.VertexAnimation = eSMD.VertexAnimation;
 
-            var stream = new FileInfo(Path.ChangeExtension(editedFilePath, ".fixed.smd")).CreateText();
-            SMD_WRITER.SmdWriter.WriteSMD(newSMD, stream);
+            var stream = new FileInfo(smdFilePath).CreateText();
+            SMD_WRITER_LIB.SmdWriter.WriteSMD(newSMD, stream);
             stream.WriteLine("// SMD_FIX_BONE_ID");
             stream.WriteLine("// By: JADERLINK");
             stream.WriteLine("// youtube.com/@JADERLINK");

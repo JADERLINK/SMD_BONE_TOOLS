@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.IO;
 using SMD_READER_LIB;
 
 namespace SMD_REPLACE_BONE

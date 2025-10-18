@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 
 namespace SMD_SKELETON_CHANGER
@@ -18,14 +17,14 @@ namespace SMD_SKELETON_CHANGER
             Console.WriteLine("# By JADERLINK");
             Console.WriteLine("# youtube.com/@JADERLINK");
             Console.WriteLine("# github.com/JADERLINK");
-            Console.WriteLine("# VERSION 1.0 (2025-02-05)");
+            Console.WriteLine("# VERSION 1.1 (2025-10-18)");
             Console.WriteLine("");
 
             if (args.Length >= 2 
-                && File.Exists(args[0]) 
+                && File.Exists(args[0])
                 && File.Exists(args[1])
-                && Path.GetExtension(args[0].ToUpperInvariant()) == ".SMD"
-                && Path.GetExtension(args[1].ToUpperInvariant()) == ".SMD"
+                && ((Path.GetExtension(args[0].ToUpperInvariant()) == ".SMD" && Path.GetExtension(args[1].ToUpperInvariant()) == ".SMD")
+                || (Path.GetExtension(args[0].ToUpperInvariant()) == ".VTA" && Path.GetExtension(args[1].ToUpperInvariant()) == ".VTA"))
                 )
             {
                 try

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using SMD_READER_LIB;
 
@@ -37,14 +36,8 @@ namespace SMD_SKELETON_CHANGER
             }
             finally
             {
-                if (oStream != null)
-                {
-                    oStream.Close();
-                }
-                if (eStream != null)
-                {
-                    eStream.Close();
-                }
+                oStream?.Close();
+                eStream?.Close();
             }
 
             int lastNextOriginalID = 0;
@@ -225,66 +218,69 @@ namespace SMD_SKELETON_CHANGER
             // vertex fix
             List<Triangle> newTriangles = new List<Triangle>();
 
-            foreach (var tri in eSMD.Triangles)
+            if (eSMD.Triangles != null)
             {
-                List<Vertex> newVertexs = new List<Vertex>();
-                foreach (var vertex in tri.Vertexs)
+                foreach (var tri in eSMD.Triangles)
                 {
-                    Vertex nv = new Vertex();
-                    nv.VertexID = vertex.VertexID;
-                    nv.PosX = vertex.PosX;
-                    nv.PosY = vertex.PosY;
-                    nv.PosZ = vertex.PosZ;
-                    nv.NormX = vertex.NormX;
-                    nv.NormY = vertex.NormY;
-                    nv.NormZ = vertex.NormZ;
-                    nv.U = vertex.U;
-                    nv.V = vertex.V;
-
-                    int newBoneId = 0;
-                    if (oldIdNewId.ContainsKey(vertex.ParentBone))
+                    List<Vertex> newVertexs = new List<Vertex>();
+                    foreach (var vertex in tri.Vertexs)
                     {
-                        newBoneId = oldIdNewId[vertex.ParentBone];
-                    }
-                    else
-                    {
-                        newBoneId = lastNextOriginalID;
-                        oldIdNewId.Add(vertex.ParentBone, lastNextOriginalID);
-                        lastNextOriginalID++;
-                    }
-                    nv.ParentBone = newBoneId;
+                        Vertex nv = new Vertex();
+                        nv.VertexID = vertex.VertexID;
+                        nv.PosX = vertex.PosX;
+                        nv.PosY = vertex.PosY;
+                        nv.PosZ = vertex.PosZ;
+                        nv.NormX = vertex.NormX;
+                        nv.NormY = vertex.NormY;
+                        nv.NormZ = vertex.NormZ;
+                        nv.U = vertex.U;
+                        nv.V = vertex.V;
 
-                    nv.Links = new List<WeightMap>();
-
-                    foreach (var weightMap in vertex.Links)
-                    {
-                        int newWeightBoneId = 0;
-                        if (oldIdNewId.ContainsKey(weightMap.BoneID))
+                        int newBoneId = 0;
+                        if (oldIdNewId.ContainsKey(vertex.ParentBone))
                         {
-                            newWeightBoneId = oldIdNewId[weightMap.BoneID];
+                            newBoneId = oldIdNewId[vertex.ParentBone];
                         }
                         else
                         {
-                            newWeightBoneId = lastNextOriginalID;
-                            oldIdNewId.Add(weightMap.BoneID, lastNextOriginalID);
+                            newBoneId = lastNextOriginalID;
+                            oldIdNewId.Add(vertex.ParentBone, lastNextOriginalID);
                             lastNextOriginalID++;
                         }
+                        nv.ParentBone = newBoneId;
 
-                        WeightMap newWeightMap = new WeightMap();
-                        newWeightMap.BoneID = newWeightBoneId;
-                        newWeightMap.Weight = weightMap.Weight;
-                        nv.Links.Add(newWeightMap);
+                        nv.Links = new List<WeightMap>();
 
+                        foreach (var weightMap in vertex.Links)
+                        {
+                            int newWeightBoneId = 0;
+                            if (oldIdNewId.ContainsKey(weightMap.BoneID))
+                            {
+                                newWeightBoneId = oldIdNewId[weightMap.BoneID];
+                            }
+                            else
+                            {
+                                newWeightBoneId = lastNextOriginalID;
+                                oldIdNewId.Add(weightMap.BoneID, lastNextOriginalID);
+                                lastNextOriginalID++;
+                            }
+
+                            WeightMap newWeightMap = new WeightMap();
+                            newWeightMap.BoneID = newWeightBoneId;
+                            newWeightMap.Weight = weightMap.Weight;
+                            nv.Links.Add(newWeightMap);
+
+                        }
+
+                        newVertexs.Add(nv);
                     }
 
-                    newVertexs.Add(nv);
+                    Triangle newtriangle = new Triangle();
+                    newtriangle.ID = tri.ID;
+                    newtriangle.Material = tri.Material;
+                    newtriangle.Vertexs = newVertexs;
+                    newTriangles.Add(newtriangle);
                 }
-
-                Triangle newtriangle = new Triangle();
-                newtriangle.ID = tri.ID;
-                newtriangle.Material = tri.Material;
-                newtriangle.Vertexs = newVertexs;
-                newTriangles.Add(newtriangle);
             }
 
             SMD newSMD = new SMD();
@@ -294,7 +290,7 @@ namespace SMD_SKELETON_CHANGER
             newSMD.VertexAnimation = eSMD.VertexAnimation;
 
             var stream = new FileInfo(Path.ChangeExtension(editedFilePath, ".changed.smd")).CreateText();
-            SMD_WRITER.SmdWriter.WriteSMD(newSMD, stream);
+            SMD_WRITER_LIB.SmdWriter.WriteSMD(newSMD, stream);
             stream.WriteLine("// SMD_SKELETON_CHANGER");
             stream.WriteLine("// By: JADERLINK");
             stream.WriteLine("// youtube.com/@JADERLINK");
